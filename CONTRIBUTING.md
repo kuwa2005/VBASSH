@@ -5,6 +5,7 @@
 - 不具合・要望は **GitHub Issue** で共有してください。
 - 修正は **Pull Request** を推奨します。`master`（または既定ブランチ）向けに送ってください。
 - CI（`.github/workflows/build.yml`）の **Release ビルド**と **`dotnet test`（`VBASSH.Tests`）** が通ることを確認してください。
+- **`gh issue comment` 等に長文を渡すとき:** Windows の **PowerShell はバッククォート（`` ` ``）を解釈**するため、本文が欠けたり化けたりします。UTF-8 の JSON をファイルに書き、**`gh api ... --input`** で渡すか、**cmd.exe** から実行するなどして回避してください。
 
 ## COM / VBA 互換（破壊的変更の扱い）
 
