@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "VBASSH", "VBASSH\VBASSH.vbproj", "{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0FBC3A8F-6E65-4133-9FE7-CD2B8FF4393C}
+	EndGlobalSection
+EndGlobal
