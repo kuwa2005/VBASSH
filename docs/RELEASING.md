@@ -20,14 +20,15 @@
 2. **リポジトリのルート**で、次のように **同梱物だけ**を ZIP にまとめる（例: PowerShell）。
 
 ```powershell
-Set-Location "VBASSH\bin\Release"
-$out = Join-Path (Resolve-Path "..\..\..") "VbaSSHLibrary-2.2.0-bin.zip"
+$rel = "VBASSH\bin\Release"
+$out = Join-Path (Get-Location) "VbaSSHLibrary-2.2.0-bin.zip"
 if (Test-Path $out) { Remove-Item $out }
-Compress-Archive -Path (Get-ChildItem -Filter "*.dll"), "VbaSSHLibrary.xml" -DestinationPath $out
-Set-Location "..\..\.."
+$items = @(Get-ChildItem "$rel\*.dll" | ForEach-Object { $_.FullName })
+$items += (Join-Path (Resolve-Path $rel) "VbaSSHLibrary.xml")
+Compress-Archive -LiteralPath $items -DestinationPath $out
 ```
 
-（`$out` はリポジトリ直下。`Release` から `..\..\..` がルート。最後の `Set-Location` でルートへ戻す。バージョン番号はタグ名に合わせて読み替えてください。）
+（リポジトリ**ルート**で実行。PowerShell 7 以降では `-Path` に複数パスを渡すと失敗することがあるため **`-LiteralPath` に配列**を渡す。バージョン番号はタグ名に合わせて読み替えてください。）
 
 ## 4. SHA256（Release 本文用）
 
