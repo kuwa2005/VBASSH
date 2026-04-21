@@ -9,7 +9,7 @@
 
 ## 2. NuGet 復元（クリーン確認）
 
-- [ ] `packages` を削除したうえで `nuget restore VBASSH.sln`（または VS で開いて復元）後、再度 Release ビルドが通る。
+- [ ] `bin` / `obj` を削除するかプロジェクトをクリーンしたうえで、`msbuild VBASSH.sln /t:Restore` または `nuget restore VBASSH.sln`（または VS で開いて復元）後、再度 Release ビルドが通る。
 
 ## 3. COM 登録（管理者環境）
 
@@ -30,7 +30,10 @@ Sub QA_Smoke()
     L.Password = "パスワード"
 
     Dim s As New VbaSSHLibrary.VbaSSH
-    s.Open L
+    If Not s.Open(L) Then
+        Debug.Print s.LastError
+        Exit Sub
+    End If
     Debug.Print s.Execute("echo ok")
     s.Close
 End Sub
@@ -38,7 +41,7 @@ End Sub
 
 - [ ] （可能なら）**秘密鍵認証**: `VbaSshLogin` に `PrivateKeyFilePath` を設定し、`Open` から `Execute` まで通る。
 - [ ] **対話シェル**: `Execute "cd …"` のあとに `Execute "pwd"` し、カレントが変わっていること（既定 `UsePersistentShell=True`）。
-- [ ] **誤ったパスワード**で `Open` したとき、期待どおり失敗する（将来、エラーメッセージの改善が入る場合はこの項目を更新）。
+- [ ] **誤ったパスワード**で `Open` したとき **`False`** を返し、**`LastError`** に内容が入ること。
 
 ## 5. ドキュメント
 

@@ -1,8 +1,10 @@
 ﻿Imports System
 Imports System.IO
+Imports System.Net.Sockets
 Imports System.Text
 Imports System.Threading
 Imports Renci.SshNet
+Imports Renci.SshNet.Common
 
 
 ' クラスをCOM経由でアクセス可能にする
@@ -20,6 +22,27 @@ Public Class VbaSSH
     Dim _shell As ShellStream
     Private _usePersistentShell As Boolean = True
     Private _shellCommandTimeoutSeconds As Integer = DefaultShellTimeoutSeconds
+    Private _lastError As String = ""
+    Private _lastExitStatus As Integer = -1
+
+
+    ''' <summary>直近の <see cref="Open"/> または <see cref="Execute"/> で失敗したときのメッセージ（成功時は空）。</summary>
+    Public ReadOnly Property LastError() As String
+        Get
+            Return If(_lastError, "")
+        End Get
+    End Property
+
+
+    ''' <summary>
+    ''' 直近の <see cref="Execute"/> の終了コード。<see cref="UsePersistentShell"/> が <c>True</c> のときは取得できないため <c>-1</c>。
+    ''' 非対話 exec（<c>False</c>）のときはリモートの終了コード（0 が成功）。
+    ''' </summary>
+    Public ReadOnly Property LastExitStatus() As Integer
+        Get
+            Return _lastExitStatus
+        End Get
+    End Property
 
 
     ''' <summary>
@@ -75,77 +98,140 @@ Public Class VbaSSH
     End Sub
 
 
+    Private Sub ResetLastResult()
+        _lastError = ""
+        _lastExitStatus = -1
+    End Sub
+
+
+    Private Sub SetLastErrorFromException(ex As Exception)
+        If ex Is Nothing Then Return
+        _lastError = ex.GetType().Name & ": " & ex.Message
+    End Sub
+
+
     ''' <summary>
     ''' <paramref name="Login"/> の内容に従い接続します。
-    ''' <see cref="VbaSshLogin.PrivateKeyFilePath"/> が空でない場合は秘密鍵認証、そうでなければパスワード認証です。
+    ''' 失敗時は <see cref="LastError"/> を設定し <c>False</c> を返します（<paramref name="Login"/> が <c>Nothing</c> のときのみ例外）。
     ''' </summary>
-    Public Function Open(Login As VbaSshLogin) As String
+    Public Function Open(Login As VbaSshLogin) As Boolean
+        ResetLastResult()
+
         If Login Is Nothing Then
             Throw New ArgumentNullException(NameOf(Login))
         End If
         If String.IsNullOrWhiteSpace(Login.Host) Then
-            Throw New ArgumentException("Host is required.", NameOf(Login))
+            _lastError = "Host is required."
+            Return False
         End If
         If Login.Port < 1 OrElse Login.Port > 65535 Then
-            Throw New ArgumentOutOfRangeException(NameOf(Login), "Port must be between 1 and 65535.")
+            _lastError = "Port must be between 1 and 65535."
+            Return False
         End If
         If String.IsNullOrWhiteSpace(Login.UserName) Then
-            Throw New ArgumentException("UserName is required.", NameOf(Login))
+            _lastError = "UserName is required."
+            Return False
         End If
 
-        DisposeConnection()
+        Try
+            DisposeConnection()
 
-        Dim useKey As Boolean = Not String.IsNullOrWhiteSpace(Login.PrivateKeyFilePath)
+            Dim useKey As Boolean = Not String.IsNullOrWhiteSpace(Login.PrivateKeyFilePath)
 
-        If useKey Then
-            If Not File.Exists(Login.PrivateKeyFilePath) Then
-                Throw New FileNotFoundException("Private key file not found.", Login.PrivateKeyFilePath)
-            End If
+            If useKey Then
+                If Not File.Exists(Login.PrivateKeyFilePath) Then
+                    _lastError = "Private key file not found: " & Login.PrivateKeyFilePath
+                    Return False
+                End If
 
-            Dim pkf As PrivateKeyFile
-            If String.IsNullOrEmpty(Login.PrivateKeyPassphrase) Then
-                pkf = New PrivateKeyFile(Login.PrivateKeyFilePath)
+                Dim pkf As PrivateKeyFile
+                If String.IsNullOrEmpty(Login.PrivateKeyPassphrase) Then
+                    pkf = New PrivateKeyFile(Login.PrivateKeyFilePath)
+                Else
+                    pkf = New PrivateKeyFile(Login.PrivateKeyFilePath, Login.PrivateKeyPassphrase)
+                End If
+
+                Dim auth As New PrivateKeyAuthenticationMethod(Login.UserName, pkf)
+                Dim ci As New ConnectionInfo(Login.Host, Login.Port, Login.UserName, auth)
+                SSHConnection = New SshClient(ci)
             Else
-                pkf = New PrivateKeyFile(Login.PrivateKeyFilePath, Login.PrivateKeyPassphrase)
+                Dim ci As New PasswordConnectionInfo(host:=Login.Host,
+                                                     port:=Login.Port,
+                                                     username:=Login.UserName,
+                                                     password:=If(Login.Password, ""))
+                SSHConnection = New SshClient(ci)
             End If
 
-            Dim auth As New PrivateKeyAuthenticationMethod(Login.UserName, pkf)
-            Dim ci As New ConnectionInfo(Login.Host, Login.Port, Login.UserName, auth)
-            SSHConnection = New SshClient(ci)
-        Else
-            Dim ci As New PasswordConnectionInfo(host:=Login.Host,
-                                                 port:=Login.Port,
-                                                 username:=Login.UserName,
-                                                 password:=If(Login.Password, ""))
-            SSHConnection = New SshClient(ci)
-        End If
-
-        SSHConnection.Connect()
-        Return SSHConnection.IsConnected.ToString()
+            SSHConnection.Connect()
+            Return SSHConnection.IsConnected
+        Catch ex As SshAuthenticationException
+            SetLastErrorFromException(ex)
+            DisposeConnection()
+            Return False
+        Catch ex As SshConnectionException
+            SetLastErrorFromException(ex)
+            DisposeConnection()
+            Return False
+        Catch ex As SocketException
+            SetLastErrorFromException(ex)
+            DisposeConnection()
+            Return False
+        Catch ex As ProxyException
+            SetLastErrorFromException(ex)
+            DisposeConnection()
+            Return False
+        Catch ex As Exception
+            SetLastErrorFromException(ex)
+            DisposeConnection()
+            Return False
+        End Try
     End Function
 
 
     Public Function Execute(Command As String) As String
         If SSHConnection Is Nothing OrElse Not SSHConnection.IsConnected Then
-            Throw New InvalidOperationException("SSH session is not connected. Call Open after setting up VbaSshLogin.")
+            _lastError = "SSH session is not connected. Call Open after setting up VbaSshLogin."
+            Throw New InvalidOperationException(_lastError)
         End If
 
-        If UsePersistentShell Then
-            Return ExecuteOnPersistentShell(If(Command, ""))
-        End If
+        _lastError = ""
+        _lastExitStatus = -1
 
-        Using cmd As SshCommand = SSHConnection.CreateCommand(If(Command, ""))
-            Return cmd.Execute()
-        End Using
+        Try
+            If UsePersistentShell Then
+                Return ExecuteOnPersistentShell(If(Command, ""))
+            End If
+
+            Using cmd As SshCommand = SSHConnection.CreateCommand(If(Command, ""))
+                Dim stdout As String = cmd.Execute()
+                _lastExitStatus = cmd.ExitStatus
+                If cmd.ExitStatus <> 0 Then
+                    If Not String.IsNullOrEmpty(cmd.Error) Then
+                        _lastError = "Exit " & cmd.ExitStatus.ToString() & ": " & cmd.Error
+                    Else
+                        _lastError = "Remote command exited with code " & cmd.ExitStatus.ToString()
+                    End If
+                End If
+                Return stdout
+            End Using
+        Catch ex As Exception
+            SetLastErrorFromException(ex)
+            Throw
+        End Try
     End Function
 
 
     Private Function ExecuteOnPersistentShell(command As String) As String
-        EnsureShellStream()
-        Dim marker As String = "__VBASSH_" & Guid.NewGuid().ToString("N") & "__"
-        _shell.Write(command & vbLf)
-        _shell.Write("echo " & marker & vbLf)
-        Return ReadUntilMarker(marker, TimeSpan.FromSeconds(ShellCommandTimeoutSeconds))
+        Try
+            EnsureShellStream()
+            Dim marker As String = "__VBASSH_" & Guid.NewGuid().ToString("N") & "__"
+            _shell.Write(command & vbLf)
+            _shell.Write("echo " & marker & vbLf)
+            Return ReadUntilMarker(marker, TimeSpan.FromSeconds(ShellCommandTimeoutSeconds))
+        Catch ex As TimeoutException
+            SetLastErrorFromException(ex)
+            Throw
+        End Try
     End Function
 
 
@@ -193,6 +279,7 @@ Public Class VbaSSH
 
     Public Sub Close()
         DisposeConnection()
+        ResetLastResult()
     End Sub
 
 End Class

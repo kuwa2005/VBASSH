@@ -81,4 +81,16 @@ Public Class VbaSshLogin
         End Set
     End Property
 
+
+    ''' <summary>
+    ''' パスワード・パスフレーズ・秘密鍵パスを空にします。接続に成功したあと、不要になったタイミングで呼び出してください。
+    ''' （.NET の文字列は即時に消去されない点に注意。ログやデバッグ出力に認証情報を出さないでください。）
+    ''' </summary>
+    Public Sub ClearSecrets()
+        _password = ""
+        _privateKeyPassphrase = ""
+        _privateKeyFilePath = ""
+    End Sub
+
 End Class
+
