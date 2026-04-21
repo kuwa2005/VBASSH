@@ -8,12 +8,10 @@ if not exist "VbaSSHLibrary.dll" (
   exit /b 1
 )
 echo === SHA256 (certutil) ===
-for %%F in (VbaSSHLibrary.dll Renci.SshNet.dll) do (
-  if exist "%%F" (
-    echo.
-    echo %%F
-    certutil -hashfile "%%F" SHA256
-  )
+for %%F in (*.dll) do (
+  echo.
+  echo %%F
+  certutil -hashfile "%%F" SHA256
 )
 popd
 exit /b 0
