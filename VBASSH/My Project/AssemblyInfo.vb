@@ -8,11 +8,11 @@ Imports System.Runtime.InteropServices
 
 ' アセンブリ属性の値を確認します
 
-<Assembly: AssemblyTitle("VBASSH")>
-<Assembly: AssemblyDescription("")>
-<Assembly: AssemblyCompany("")>
-<Assembly: AssemblyProduct("VBASSH")>
-<Assembly: AssemblyCopyright("Copyright ©  2020")>
+<Assembly: AssemblyTitle("VbaSSHLibrary")>
+<Assembly: AssemblyDescription("SSH client COM library for VBA (Excel) and VBScript")>
+<Assembly: AssemblyCompany("https://github.com/kuwa2005/VBASSH")>
+<Assembly: AssemblyProduct("VbaSSHLibrary")>
+<Assembly: AssemblyCopyright("Copyright © 2026")>
 <Assembly: AssemblyTrademark("")>
 
 <Assembly: ComVisible(True)>

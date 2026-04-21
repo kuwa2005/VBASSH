@@ -115,6 +115,27 @@ End Sub
 - Visual Basic .NET（.NET Framework 4.8）
 - [SSH.NET](https://github.com/sshnet/SSH.NET)（`Renci.SshNet`）
 
+## Windows SmartScreen 対策（予防）
+
+SmartScreen は **未署名**や **ダウンロード元の評判が低い**ファイルを止めやすいです。次の組み合わせが現実的です。
+
+1. **Authenticode で `VbaSSHLibrary.dll`（および配布 ZIP 内の各 EXE/DLL）に署名する**  
+   商用の **コード署名証明書**（DigiCert、Sectigo 等）を取得し、Windows SDK の **`signtool`** で署名します。**強名（`.snk`）だけでは SmartScreen は満足しません**（別物です）。
+
+2. **タイムスタンプを付ける**  
+   証明書の有効期限が切れたあとも署名を検証できるよう、`signtool` に **RFC3161 タイムスタンプ**（例: DigiCert の `http://timestamp.digicert.com`）を指定します。
+
+3. **EV コード署名証明書（任意）**  
+   標準の OV に比べ、SmartScreen の **即時信頼**が得られやすいと言われます（コスト・発行審査は重い）。
+
+4. **リリース時にハッシュを公開する**  
+   利用者が改ざんなく取得できたか確認できるよう、GitHub Releases の本文に **SHA256** を記載します。ビルド後に `scripts\compute-release-hashes.cmd` を実行すると一覧を出せます。
+
+5. **Microsoft への申請（補助）**  
+   誤検知が続く場合は、[Microsoft の該当フォーム](https://www.microsoft.com/wdsi/filesubmission) などからファイル提出・誤検知報告を検討します（根本対策は署名と継続配布による評判です）。
+
+テンプレート: `scripts\sign-authenticode.example.cmd` をコピーし、PFX パスと `signtool` のパスを環境に合わせて編集してください（**秘密はリポジトリに含めない**こと）。
+
 ## ドキュメント用画像
 
 README 用の画面キャプチャは `docs/images/` に置いています。

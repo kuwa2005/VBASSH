@@ -262,3 +262,6 @@ __pycache__/
 
 # ローカル配布物アーカイブ（リポジトリには含めない）
 *.zip
+
+# Authenticode 用に example からコピーしたスクリプト（PFX パス等を含み得る）
+scripts/sign-authenticode.cmd
