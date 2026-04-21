@@ -108,6 +108,21 @@ End Sub
 
 `Open` の第 2 引数は **ポート番号（整数）** です。
 
+### 公開鍵（秘密鍵ファイル）認証
+
+`OpenWithPrivateKey` で、ローカルに保存した秘密鍵ファイルのパスを指定します。SSH.NET がサポートする形式（**OpenSSH**、**PEM**、**PuTTY .ppk** など）が利用できます。鍵にパスフレーズが無い場合は、**第 5 引数に空文字列 `""`** を渡してください。
+
+```vb
+Public Sub ExampleWithKey()
+    Dim ssh As New VbaSSHLibrary.VbaSSH
+    ssh.OpenWithPrivateKey "192.168.0.10", 22, "user", "C:\Users\me\.ssh\id_ed25519", ""
+    Debug.Print ssh.Execute("uname -a")
+    ssh.Close
+End Sub
+```
+
+パスフレーズ付き鍵の例: `ssh.OpenWithPrivateKey host, port, user, "C:\keys\id_rsa", "my-passphrase"`
+
 ## `Execute` が期待どおり動かないとき
 
 手動の SSH クライアントでは成功するが、本ライブラリ経由では失敗する場合は、リモートの **ログインシェル・環境変数・非対話実行の制限**などが原因になることがあります。
