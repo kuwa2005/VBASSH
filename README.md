@@ -2,7 +2,7 @@
 
 [![build](https://github.com/kuwa2005/VBASSH/actions/workflows/build.yml/badge.svg)](https://github.com/kuwa2005/VBASSH/actions/workflows/build.yml)
 
-Excel（VBA）や VBScript から SSH 接続を行うための **COM コンポーネント**です。`VbaSSH` インスタンスに対して **`Open`（接続）→ `Execute`（コマンド実行）→ `Close`（切断）** の順で呼び出します。
+Excel（VBA）や VBScript から SSH 接続を行うための **COM コンポーネント**です。まず **`VbaSshLogin`** でホスト・認証情報を組み立て、**`VbaSSH.Open` に渡して接続**します。続けて **`Execute` → `Close`** の順で呼び出します。
 
 ![複数ホストへ接続するイメージ](docs/images/image-826.png)
 
@@ -77,51 +77,93 @@ VBE で **ツール → 参照** を開き、`VbaSSHLibrary.tlb` を追加し、
 
 ![参照設定の例](docs/images/image-399.png)
 
-## API の使い方（例）
+## API の使い方（オブジェクト指向）
+
+### `VbaSshLogin`（ログイン情報）
+
+`Dim login As New VbaSSHLibrary.VbaSshLogin` で生成し、**プロパティ**で値を設定します。
+
+| プロパティ | 説明 |
+|------------|------|
+| `Host` | ホスト名または IP |
+| `Port` | ポート（既定 **22**） |
+| `UserName` | ログインユーザー名 |
+| `Password` | パスワード認証用（鍵のみのときは空のまま） |
+| `PrivateKeyFilePath` | 秘密鍵ファイルのパス（**パスワードのみのときは空**） |
+| `PrivateKeyPassphrase` | 鍵のパスフレーズ（不要なら `""`） |
+
+**認証の切り替え:** `PrivateKeyFilePath` が **空でない**ときは **秘密鍵ファイル認証**（サーバ側の `authorized_keys` に対応する公開鍵が登録されている想定）。**空**のときは **`Password` でパスワード認証**です。
+
+### `VbaSSH.Open(login)`
+
+`VbaSshLogin` を 1 個渡して接続します。
+
+#### パスワード認証の例
 
 ```vb
-Public Sub Example()
+Public Sub ExamplePassword()
+    Dim login As New VbaSSHLibrary.VbaSshLogin
+    login.Host = "192.168.0.10"
+    login.Port = 22
+    login.UserName = "user"
+    login.Password = "secret"
+
     Dim ssh As New VbaSSHLibrary.VbaSSH
-    ssh.Open "192.168.0.10", 22, "user", "password"
+    ssh.Open login
     Debug.Print ssh.Execute("uname -a")
     ssh.Close
 End Sub
 ```
 
-複数接続の例:
+#### 秘密鍵ファイル（公開鍵認証）の例
+
+```vb
+Public Sub ExamplePrivateKey()
+    Dim login As New VbaSSHLibrary.VbaSshLogin
+    login.Host = "192.168.0.10"
+    login.UserName = "user"
+    login.PrivateKeyFilePath = "C:\Users\me\.ssh\id_ed25519"
+    login.PrivateKeyPassphrase = ""
+
+    Dim ssh As New VbaSSHLibrary.VbaSSH
+    ssh.Open login
+    Debug.Print ssh.Execute("uname -a")
+    ssh.Close
+End Sub
+```
+
+鍵形式は SSH.NET 対応の **OpenSSH / PEM / PuTTY .ppk** などを指定できます。
+
+#### 複数接続の例
 
 ```vb
 Public Sub MultipleSessions()
-    Dim s1 As New VbaSSHLibrary.VbaSSH
-    Dim s2 As New VbaSSHLibrary.VbaSSH
+    Dim ssh1 As New VbaSSHLibrary.VbaSSH
+    Dim ssh2 As New VbaSSHLibrary.VbaSSH
 
-    s1.Open "192.168.0.100", 22, "user1", "pass1"
-    s2.Open "192.168.0.101", 22, "user2", "pass2"
+    Dim L1 As New VbaSSHLibrary.VbaSshLogin
+    L1.Host = "192.168.0.100" : L1.UserName = "user1" : L1.Password = "pass1"
 
-    Debug.Print s1.Execute("cd /; ls -la")
-    Debug.Print s2.Execute("tar cvf backup.tar *.php")
+    Dim L2 As New VbaSSHLibrary.VbaSshLogin
+    L2.Host = "192.168.0.101" : L2.UserName = "user2" : L2.Password = "pass2"
 
-    s1.Close
-    s2.Close
+    ssh1.Open L1
+    ssh2.Open L2
+    Debug.Print ssh1.Execute("cd /; ls -la")
+    Debug.Print ssh2.Execute("tar cvf backup.tar *.php")
+    ssh1.Close
+    ssh2.Close
 End Sub
 ```
 
-`Open` の第 2 引数は **ポート番号（整数）** です。
+### v1 系 API からの移行（破壊的変更）
 
-### 公開鍵（秘密鍵ファイル）認証
+アセンブリ **2.0** より、次の旧形式は **廃止**されています。
 
-`OpenWithPrivateKey` で、ローカルに保存した秘密鍵ファイルのパスを指定します。SSH.NET がサポートする形式（**OpenSSH**、**PEM**、**PuTTY .ppk** など）が利用できます。鍵にパスフレーズが無い場合は、**第 5 引数に空文字列 `""`** を渡してください。
+- ~~`Open host, port, user, pass`~~
+- ~~`OpenWithPrivateKey ...`~~
 
-```vb
-Public Sub ExampleWithKey()
-    Dim ssh As New VbaSSHLibrary.VbaSSH
-    ssh.OpenWithPrivateKey "192.168.0.10", 22, "user", "C:\Users\me\.ssh\id_ed25519", ""
-    Debug.Print ssh.Execute("uname -a")
-    ssh.Close
-End Sub
-```
-
-パスフレーズ付き鍵の例: `ssh.OpenWithPrivateKey host, port, user, "C:\keys\id_rsa", "my-passphrase"`
+上記の **`VbaSshLogin` + `Open login`** に置き換えてください。再ビルド後は **RegAsm の再実行**と、VBA の **参照の更新**（必要なら）を行ってください。
 
 ## `Execute` が期待どおり動かないとき
 

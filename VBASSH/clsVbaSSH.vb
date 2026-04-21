@@ -1,6 +1,5 @@
 ﻿Imports System
 Imports System.IO
-Imports System.Net
 Imports Renci.SshNet
 
 
@@ -27,47 +26,51 @@ Public Class VbaSSH
     End Sub
 
 
-    ''' <summary>パスワード認証で接続します。</summary>
-    Public Function Open(ByVal Host As String, ByVal Port As Integer, ByVal UserName As String, Password As String) As String
-        DisposeConnection()
-
-        Dim ci As New PasswordConnectionInfo(host:=Host,
-                                             port:=Port,
-                                             username:=UserName,
-                                             password:=Password)
-
-        SSHConnection = New SshClient(ci)
-        SSHConnection.Connect()
-        Return SSHConnection.IsConnected.ToString()
-    End Function
-
-
-    ''' <summary>秘密鍵ファイル（OpenSSH / PEM / PuTTY 等）で接続します。パスフレーズ不要のときは空文字列を渡してください。</summary>
-    Public Function OpenWithPrivateKey(ByVal Host As String,
-                                       ByVal Port As Integer,
-                                       ByVal UserName As String,
-                                       ByVal PrivateKeyFilePath As String,
-                                       ByVal PrivateKeyPassphrase As String) As String
-        DisposeConnection()
-
-        If String.IsNullOrWhiteSpace(PrivateKeyFilePath) Then
-            Throw New ArgumentException("Private key file path is required.", NameOf(PrivateKeyFilePath))
+    ''' <summary>
+    ''' <paramref name="Login"/> の内容に従い接続します。
+    ''' <see cref="VbaSshLogin.PrivateKeyFilePath"/> が空でない場合は秘密鍵認証、そうでなければパスワード認証です。
+    ''' </summary>
+    Public Function Open(Login As VbaSshLogin) As String
+        If Login Is Nothing Then
+            Throw New ArgumentNullException(NameOf(Login))
         End If
-        If Not File.Exists(PrivateKeyFilePath) Then
-            Throw New FileNotFoundException("Private key file not found.", PrivateKeyFilePath)
+        If String.IsNullOrWhiteSpace(Login.Host) Then
+            Throw New ArgumentException("Host is required.", NameOf(Login))
+        End If
+        If Login.Port < 1 OrElse Login.Port > 65535 Then
+            Throw New ArgumentOutOfRangeException(NameOf(Login), "Port must be between 1 and 65535.")
+        End If
+        If String.IsNullOrWhiteSpace(Login.UserName) Then
+            Throw New ArgumentException("UserName is required.", NameOf(Login))
         End If
 
-        Dim pkf As PrivateKeyFile
-        If String.IsNullOrEmpty(PrivateKeyPassphrase) Then
-            pkf = New PrivateKeyFile(PrivateKeyFilePath)
+        DisposeConnection()
+
+        Dim useKey As Boolean = Not String.IsNullOrWhiteSpace(Login.PrivateKeyFilePath)
+
+        If useKey Then
+            If Not File.Exists(Login.PrivateKeyFilePath) Then
+                Throw New FileNotFoundException("Private key file not found.", Login.PrivateKeyFilePath)
+            End If
+
+            Dim pkf As PrivateKeyFile
+            If String.IsNullOrEmpty(Login.PrivateKeyPassphrase) Then
+                pkf = New PrivateKeyFile(Login.PrivateKeyFilePath)
+            Else
+                pkf = New PrivateKeyFile(Login.PrivateKeyFilePath, Login.PrivateKeyPassphrase)
+            End If
+
+            Dim auth As New PrivateKeyAuthenticationMethod(Login.UserName, pkf)
+            Dim ci As New ConnectionInfo(Login.Host, Login.Port, Login.UserName, auth)
+            SSHConnection = New SshClient(ci)
         Else
-            pkf = New PrivateKeyFile(PrivateKeyFilePath, PrivateKeyPassphrase)
+            Dim ci As New PasswordConnectionInfo(host:=Login.Host,
+                                                 port:=Login.Port,
+                                                 username:=Login.UserName,
+                                                 password:=If(Login.Password, ""))
+            SSHConnection = New SshClient(ci)
         End If
 
-        Dim auth As New PrivateKeyAuthenticationMethod(UserName, pkf)
-        Dim ci As New ConnectionInfo(Host, Port, UserName, auth)
-
-        SSHConnection = New SshClient(ci)
         SSHConnection.Connect()
         Return SSHConnection.IsConnected.ToString()
     End Function
@@ -75,7 +78,7 @@ Public Class VbaSSH
 
     Public Function Execute(Command As String) As String
         If SSHConnection Is Nothing OrElse Not SSHConnection.IsConnected Then
-            Throw New InvalidOperationException("SSH session is not connected. Call Open or OpenWithPrivateKey first.")
+            Throw New InvalidOperationException("SSH session is not connected. Call Open after setting up VbaSshLogin.")
         End If
 
         Dim CmdWork As SshCommand = SSHConnection.CreateCommand(Command)

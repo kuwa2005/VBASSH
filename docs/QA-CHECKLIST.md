@@ -23,14 +23,20 @@
 
 ```vb
 Sub QA_Smoke()
+    Dim L As New VbaSSHLibrary.VbaSshLogin
+    L.Host = "ホスト"
+    L.Port = 22
+    L.UserName = "ユーザー"
+    L.Password = "パスワード"
+
     Dim s As New VbaSSHLibrary.VbaSSH
-    s.Open "ホスト", 22, "ユーザー", "パスワード"
+    s.Open L
     Debug.Print s.Execute("echo ok")
     s.Close
 End Sub
 ```
 
-- [ ] （可能なら）**公開鍵認証**: `OpenWithPrivateKey` でテスト用鍵を指定し、`Execute` まで通る。
+- [ ] （可能なら）**秘密鍵認証**: `VbaSshLogin` に `PrivateKeyFilePath` を設定し、`Open` から `Execute` まで通る。
 - [ ] **誤ったパスワード**で `Open` したとき、期待どおり失敗する（将来、エラーメッセージの改善が入る場合はこの項目を更新）。
 
 ## 5. ドキュメント
