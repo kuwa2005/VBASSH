@@ -24,3 +24,6 @@ jobs:
 
       - name: Build Release (no COM registration)
         run: msbuild VBASSH.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /p:RegisterForComInterop=false /m /v:minimal
+
+      - name: Test (MSTest)
+        run: dotnet test VBASSH.Tests\VBASSH.Tests.vbproj -c Release --no-build --verbosity minimal

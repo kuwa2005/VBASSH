@@ -73,6 +73,8 @@ call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\v
 
 リポジトリ直下で実行するか、同等の内容を **`scripts\build-release.cmd`** から実行できます（上記 `vcvars64.bat` のパスはスクリプト内に記載済み）。
 
+**単体テスト:** 上記ビルドのあと、`dotnet test VBASSH.Tests\VBASSH.Tests.vbproj -c Release --no-build` で **MSTest**（ネットワーク不要な検証のみ）を実行できます。
+
 `vcvars64.bat` のあと環境変数 `Platform` が **x64** になることがあり、ソリューションに無い `Release|x64` が選ばれて失敗します。その場合は **`/p:Platform="Any CPU"`** を付けてください（スクリプトでは指定済み）。
 
 ## COM としての登録（RegAsm）

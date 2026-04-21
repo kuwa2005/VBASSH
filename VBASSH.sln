@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "VBASSH", "VBASSH\VBASSH.vbproj", "{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}"
 EndProject
+Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "VBASSH.Tests", "VBASSH.Tests\VBASSH.Tests.vbproj", "{C8D4F2A1-9E3B-4C7D-8A1F-6B5C4D3E2F10}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BCBE91E4-582D-4035-8C4D-FD55DFEB02C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8D4F2A1-9E3B-4C7D-8A1F-6B5C4D3E2F10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8D4F2A1-9E3B-4C7D-8A1F-6B5C4D3E2F10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8D4F2A1-9E3B-4C7D-8A1F-6B5C4D3E2F10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8D4F2A1-9E3B-4C7D-8A1F-6B5C4D3E2F10}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
