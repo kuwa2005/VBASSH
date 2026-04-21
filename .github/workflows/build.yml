@@ -26,4 +26,7 @@ jobs:
         run: msbuild VBASSH.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /p:RegisterForComInterop=false /m /v:minimal
 
       - name: Test (MSTest)
+        env:
+          Platform: ""
+          PlatformName: ""
         run: dotnet test VBASSH.Tests\VBASSH.Tests.vbproj -c Release --no-build --verbosity minimal

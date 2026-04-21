@@ -4,7 +4,7 @@
 
 ## 1. ビルド
 
-- [ ] Visual Studio または `scripts\build-release.cmd` で **Release** が成功する。
+- [ ] Visual Studio または `scripts\build-release.cmd` で **Release** が成功する（スクリプトは **ビルド後に `dotnet test`** まで実行する）。
 - [ ] `dotnet test VBASSH.Tests\VBASSH.Tests.vbproj -c Release --no-build`（またはビルド直後に `--no-build` なし）で **単体テストがすべて成功**する。
 - [ ] `VBASSH\bin\Release\` に **`VbaSSHLibrary.dll`** と、**依存の各 `*.dll`**（`Renci.SshNet.dll`、`BouncyCastle.Cryptography.dll` 等）が揃っている。
 

@@ -71,9 +71,9 @@ call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\v
 "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" VBASSH.sln /t:Restore,Build /p:Configuration=Release /p:Platform="Any CPU" /p:RegisterForComInterop=false
 ```
 
-リポジトリ直下で実行するか、同等の内容を **`scripts\build-release.cmd`** から実行できます（上記 `vcvars64.bat` のパスはスクリプト内に記載済み）。
+リポジトリ直下で実行するか、同等の内容を **`scripts\build-release.cmd`** から実行できます（上記 `vcvars64.bat` のパスはスクリプト内に記載済み）。**成功時は続けて `dotnet test`（`VBASSH.Tests`）まで実行**します（`dotnet` が PATH に必要です）。
 
-**単体テスト:** 上記ビルドのあと、`dotnet test VBASSH.Tests\VBASSH.Tests.vbproj -c Release --no-build` で **MSTest**（ネットワーク不要な検証のみ）を実行できます。
+**単体テストのみ手動で再実行する場合:** `dotnet test VBASSH.Tests\VBASSH.Tests.vbproj -c Release --no-build` で **MSTest**（ネットワーク不要な検証のみ）を実行できます。
 
 `vcvars64.bat` のあと環境変数 `Platform` が **x64** になることがあり、ソリューションに無い `Release|x64` が選ばれて失敗します。その場合は **`/p:Platform="Any CPU"`** を付けてください（スクリプトでは指定済み）。
 
