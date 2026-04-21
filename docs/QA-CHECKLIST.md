@@ -37,6 +37,7 @@ End Sub
 ```
 
 - [ ] （可能なら）**秘密鍵認証**: `VbaSshLogin` に `PrivateKeyFilePath` を設定し、`Open` から `Execute` まで通る。
+- [ ] **対話シェル**: `Execute "cd …"` のあとに `Execute "pwd"` し、カレントが変わっていること（既定 `UsePersistentShell=True`）。
 - [ ] **誤ったパスワード**で `Open` したとき、期待どおり失敗する（将来、エラーメッセージの改善が入る場合はこの項目を更新）。
 
 ## 5. ドキュメント

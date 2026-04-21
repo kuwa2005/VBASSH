@@ -156,6 +156,34 @@ Public Sub MultipleSessions()
 End Sub
 ```
 
+### 複数の `Execute` とカレントディレクトリ（対話シェル）
+
+**既定（`UsePersistentShell = True`）**では、SSH.NET の **`ShellStream`** でサーバ上の **同一対話シェル**を使います。そのため `cd` のあとに続く `Execute` では、**カレントディレクトリやシェル変数が維持**され、通常の SSH セッションに近い操作ができます。
+
+```vb
+Public Sub ExampleWithBlock()
+    Dim L As New VbaSSHLibrary.VbaSshLogin
+    L.Host = "example.com"
+    L.UserName = "user"
+    L.Password = "secret"
+
+    With New VbaSSHLibrary.VbaSSH
+        .Open L
+        .Execute "cd ~/hogehoge"
+        Debug.Print .Execute("pwd")
+        Debug.Print .Execute("ls -la")
+        Debug.Print .Execute("tar cvf backup.tar *.php")
+        .Close
+    End With
+End Sub
+```
+
+- 各コマンドの完了は、内部で **一意の同期マーカー**（`echo __VBASSH_…__`）を使って待ち合わせています。
+- 長時間コマンドは **`ShellCommandTimeoutSeconds`**（既定 **120** 秒）以内に終わる必要があります。
+- リモートが **sh/bash 以外**で `echo` の挙動が異なる場合は、動作に注意してください。
+
+**従来どおり「コマンドごとに独立した exec」**にしたい場合は、接続後に **`UsePersistentShell = False`** を設定してください（`cd` は次行に引き継がれません）。
+
 ### v1 系 API からの移行（破壊的変更）
 
 アセンブリ **2.0** より、次の旧形式は **廃止**されています。
