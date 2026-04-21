@@ -51,3 +51,7 @@ End Sub
 ## 6. CI（リポジトリ管理者）
 
 - [ ] GitHub Actions の **build** ワークフローが緑になる（`master` への push または PR）。
+
+## 7. GitHub Release（メンテナ）
+
+- [ ] **[RELEASING.md](RELEASING.md)** に従い、タグ・Release 本文（**`CHANGELOG.md`** および任意で SHA256）・配布 ZIP を揃える。
